@@ -4,7 +4,7 @@ function planQuery(sql) {
   const ast = parseSQL(sql);
   return {
     sources: ["github", "jira"],
-    ast
+    astType: ast.type
   };
 }
 
