@@ -57,8 +57,6 @@ app.post("/v1/query", async (req, res) => {
       "github.pull_requests"
     );
 
-    console.log({ traceId, rowsFetched: rows.length });
-
     // Apply Column Masking (CLS)
     // Column masking applied post-fetch in the gateway for prototype simplicity.
     // In production, masking may be pushed down or enforced by the source.
@@ -68,6 +66,8 @@ app.post("/v1/query", async (req, res) => {
       policy,
       "github.pull_requests"
     );
+
+    console.log({ traceId, rowsFetched: rows.length });
 
     // 3. Build response
     res.json({
