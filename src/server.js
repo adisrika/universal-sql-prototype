@@ -9,6 +9,8 @@ const { fetchPullRequests } = require("./connectors/github");
 const policy = require("./policy/entitlements.json");
 const { applyRLS } = require("./policy/rls");
 
+const { applyColumnMask } = require("./policy/columnMask");
+
 
 const app = express();
 app.use(bodyParser.json());
@@ -49,13 +51,23 @@ app.post("/v1/query", async (req, res) => {
     // RLS applied post-fetch for prototype simplicity.
     // In production, this would be enforced at plan-time or pushed to the source.
 
-    const rows = applyRLS(
-       fetchedRows,
-       policy,
-       "github.pull_requests"
+    const rlsRows = applyRLS(
+      fetchedRows,
+      policy,
+      "github.pull_requests"
     );
 
     console.log({ traceId, rowsFetched: rows.length });
+
+    // Apply Column Masking (CLS)
+    // Column masking applied post-fetch in the gateway for prototype simplicity.
+    // In production, masking may be pushed down or enforced by the source.
+
+    const rows = applyColumnMask(
+      rlsRows,
+      policy,
+      "github.pull_requests"
+    );
 
     // 3. Build response
     res.json({
