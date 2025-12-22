@@ -5,6 +5,11 @@ const { v4: uuidv4 } = require("uuid");
 const { planQuery } = require("./planner/planner");
 const { fetchPullRequests } = require("./connectors/github");
 
+
+const policy = require("./policy/entitlements.json");
+const { applyRLS } = require("./policy/rls");
+
+
 const app = express();
 app.use(bodyParser.json());
 
@@ -38,7 +43,18 @@ app.post("/v1/query", async (req, res) => {
     console.log({ traceId, plan: "query planned" });
 
     // 2. Execute GitHub connector (single-source for now)
-    const rows = await fetchPullRequests();
+    const fetchedRows = await fetchPullRequests();
+    
+    // Apply Row-Level Security (RLS)
+    // RLS applied post-fetch for prototype simplicity.
+    // In production, this would be enforced at plan-time or pushed to the source.
+
+    const rows = applyRLS(
+       fetchedRows,
+       policy,
+       "github.pull_requests"
+    );
+
     console.log({ traceId, rowsFetched: rows.length });
 
     // 3. Build response
