@@ -2,21 +2,16 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const { v4: uuidv4 } = require("uuid");
 
-const { planQuery } = require("./planner/planner");
-const { fetchPullRequests } = require("./connectors/github");
-
-
-const policy = require("./policy/entitlements.json");
-const { applyRLS } = require("./policy/rls");
-
-const { applyColumnMask } = require("./policy/columnMask");
-
+const { planQuery } = require("../planner/planner");
+const { executePlan } = require("../execution/executor");
+const { resolveTenantContext } = require("../../control_plane/tenant_context");
 
 const app = express();
 app.use(bodyParser.json());
 
 /**
  * POST /v1/query
+ *
  * Body:
  * {
  *   "sql": "SELECT * FROM github.pull_requests",
@@ -27,9 +22,12 @@ app.post("/v1/query", async (req, res) => {
   const traceId = uuidv4();
   const { sql, max_staleness_ms } = req.body;
 
+  // Resolve tenant + user identity (mocked for prototype)
+  const tenantContext = resolveTenantContext(req);
+
   console.log(
     JSON.stringify(
-      { traceId, sql, max_staleness_ms },
+      { traceId, sql, max_staleness_ms, tenantContext },
       null,
       2
     )
@@ -40,32 +38,20 @@ app.post("/v1/query", async (req, res) => {
       throw new Error("SQL query is required");
     }
 
-    // 1. Plan the query (parse + validate)
+    // 1. Plan the query (parse + validate + source detection)
     const plan = planQuery(sql);
-    console.log({ traceId, plan: "query planned" });
 
-    // 2. Execute GitHub connector (single-source for now)
-    const fetchedRows = await fetchPullRequests();
-    
-    // Apply Row-Level Security (RLS)
-    // RLS applied post-fetch for prototype simplicity.
-    // In production, this would be enforced at plan-time or pushed to the source.
+    // 2. Execute query plan generically across connectors
+    const results = await executePlan({
+      plan,
+      tenantContext
+    });
 
-    const rlsRows = applyRLS(
-      fetchedRows,
-      policy,
-      "github.pull_requests"
-    );
-
-    // Apply Column Masking (CLS)
-    // Column masking applied post-fetch in the gateway for prototype simplicity.
-    // In production, masking may be pushed down or enforced by the source.
-
-    const rows = applyColumnMask(
-      rlsRows,
-      policy,
-      "github.pull_requests"
-    );
+    // NOTE:
+    // Prototype currently returns a single source result.
+    // Cross-source joins will be added in the next step.
+    const source = plan.sources[0];
+    const rows = results[source] || [];
 
     console.log({ traceId, rowsFetched: rows.length });
 
@@ -92,4 +78,3 @@ app.post("/v1/query", async (req, res) => {
 app.listen(3000, () => {
   console.log("🚀 Query Gateway listening on http://localhost:3000");
 });
-

@@ -1,4 +1,4 @@
-async function fetchPullRequests() {
+async function execute({ tenantContext }) {
   await new Promise(r => setTimeout(r, 150));
 
   return [
@@ -19,4 +19,4 @@ async function fetchPullRequests() {
   ];
 }
 
-module.exports = { fetchPullRequests };
+module.exports = { execute };
