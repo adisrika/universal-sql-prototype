@@ -5,9 +5,17 @@ const { v4: uuidv4 } = require("uuid");
 const { planQuery } = require("../planner/planner");
 const { executePlan } = require("../execution/executor");
 const { resolveTenantContext } = require("../../control_plane/tenant_context");
+const { register } =
+  require("../observability/metrics");
+
 
 const app = express();
 app.use(bodyParser.json());
+
+app.get("/metrics", async (req, res) => {
+  res.set("Content-Type", register.contentType);
+  res.end(await register.metrics());
+});
 
 /**
  * POST /v1/query

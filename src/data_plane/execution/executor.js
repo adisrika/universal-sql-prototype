@@ -6,6 +6,10 @@ const policyStore = require("../../control_plane/policy_store");
 const { innerJoin } = require("./joiner");
 const { applyProjection } = require("./projector");
 const { cache } = require("../cache/cache");
+const {
+  connectorRequestsTotal,
+  connectorLatencyMs
+} = require("../observability/metrics");
 
 
 async function executePlan({ plan, tenantContext, max_staleness_ms }) {
@@ -38,7 +42,22 @@ async function executePlan({ plan, tenantContext, max_staleness_ms }) {
     }
 
     // 3. Live fetch from connector
+    const start = Date.now();
     const rawRows = await connector.execute({ tenantContext });
+    const durationMs = Date.now() - start;
+
+    // Metrics
+    connectorRequestsTotal.inc({ source });
+    connectorLatencyMs.observe({ source }, durationMs);
+
+    // Trace-friendly log
+    console.log({
+        traceId: tenantContext.traceId,
+        source,
+        duration_ms: durationMs,
+        cache: "live"
+    });
+
 
     // 4. Apply RLS
     const rlsRows = applyRLS(
