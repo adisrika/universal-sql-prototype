@@ -50,8 +50,8 @@ app.post("/v1/query", async (req, res) => {
     // NOTE:
     // Prototype currently returns a single source result.
     // Cross-source joins will be added in the next step.
-    const source = plan.sources[0];
-    const rows = results[source] || [];
+    const rows = plan.join ? results.joined : results[plan.sources[0]] || [];
+
 
     console.log({ traceId, rowsFetched: rows.length });
 
