@@ -4,6 +4,7 @@ const { applyRLS } = require("../../control_plane/rls");
 const { applyColumnMask } = require("../../control_plane/columnMask");
 const policyStore = require("../../control_plane/policy_store");
 const { innerJoin } = require("./joiner");
+const { applyProjection } = require("./projector");
 
 async function executePlan({ plan, tenantContext }) {
   const results = {};
@@ -33,7 +34,8 @@ async function executePlan({ plan, tenantContext }) {
     results[source] = finalRows;
   }
 
-  if (plan.join) {
+  // Apply join if present
+    if (plan.join) {
     const { left, right } = plan.join;
 
     const joined = innerJoin(
@@ -44,11 +46,20 @@ async function executePlan({ plan, tenantContext }) {
     );
 
     return {
-        joined
+        rows: applyProjection(joined, plan.projection)
     };
-  }
+    }
 
-  return results;
+    // Single-source query
+    const source = plan.sources[0];
+    const rows = results[source] || [];
+
+    return {
+        rows: plan.projection
+            ? applyProjection(rows, plan.projection)
+            : rows
+    };
+
 }
 
 module.exports = { executePlan };

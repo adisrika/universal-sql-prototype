@@ -62,6 +62,47 @@ function extractJoin(ast) {
   };
 }
 
+function extractProjection(ast) {
+  // SELECT *
+  if (
+    ast.columns.length === 1 &&
+    ast.columns[0].expr &&
+    (
+      ast.columns[0].expr.type === "star" ||
+      (
+        ast.columns[0].expr.type === "column_ref" &&
+        ast.columns[0].expr.column === "*"
+      )
+    )
+  ) {
+    return null;
+  }
+
+  const projection = [];
+
+  for (const col of ast.columns) {
+    const expr = col.expr;
+
+    if (expr.type !== "column_ref") {
+      throw new Error(
+        "Only simple column projections are supported in this prototype"
+      );
+    }
+
+    // Guard again just in case
+    if (expr.column === "*") {
+      return null;
+    }
+
+    projection.push({
+      column: expr.column
+    });
+  }
+
+  return projection;
+}
+
+
 /**
  * Main planner entry point.
  * Converts SQL into an execution plan.
@@ -102,9 +143,12 @@ function planQuery(sql) {
 
   const join = extractJoin(ast);
 
+  const projection = extractProjection(ast);
+
   return {
     sources: Array.from(sources),
     join,
+    projection,
     ast
   };
 }
