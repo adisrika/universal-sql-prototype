@@ -44,7 +44,8 @@ app.post("/v1/query", async (req, res) => {
     // 2. Execute query plan generically across connectors
     const results = await executePlan({
       plan,
-      tenantContext
+      tenantContext,
+      max_staleness_ms: max_staleness_ms ?? 0
     });
 
     // NOTE:
@@ -54,14 +55,22 @@ app.post("/v1/query", async (req, res) => {
 
     console.log({ traceId, rowsFetched: rows.length });
 
+    console.log({
+      traceId,
+      cache_source: results.cache_source,
+      freshness_ms: results.freshness_ms
+    });
+
     // 3. Build response
     res.json({
       columns: rows.length > 0 ? Object.keys(rows[0]) : [],
       rows,
-      freshness_ms: 0,
+      freshness_ms: results.freshness_ms,
+      cache_source: results.cache_source,
       rate_limit_status: "OK",
       trace_id: traceId
     });
+
 
   } catch (err) {
     console.error({ traceId, error: err.message });
