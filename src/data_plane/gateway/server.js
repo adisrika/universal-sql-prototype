@@ -67,6 +67,15 @@ app.post("/v1/query", async (req, res) => {
   } catch (err) {
     console.error({ traceId, error: err.message });
 
+    if (err.code === "RATE_LIMIT_EXHAUSTED") {
+      return res.status(429).json({
+        error: "RATE_LIMIT_EXHAUSTED",
+        source: err.source,
+        retry_after_ms: err.retry_after_ms,
+        trace_id: traceId
+      });
+    }
+
     res.status(400).json({
       error: "QUERY_FAILED",
       message: err.message,

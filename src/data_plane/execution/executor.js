@@ -1,3 +1,4 @@
+const { checkRateLimit } = require("../rate_limit/rateLimiter");
 const connectorRegistry = require("../../control_plane/connector_registry");
 const { applyRLS } = require("../../control_plane/rls");
 const { applyColumnMask } = require("../../control_plane/columnMask");
@@ -12,6 +13,8 @@ async function executePlan({ plan, tenantContext }) {
       throw new Error(`Connector not registered: ${source}`);
     }
 
+    checkRateLimit(source);
+    
     const rawRows = await connector.execute({ tenantContext });
 
     const rlsRows = applyRLS(
