@@ -1,5 +1,7 @@
 # Query Lifecycle: End-to-End Flow
 
+See [Performance & Scaling](performance-and-scaling.md) for latency, scaling, and cost controls.
+
 ## Purpose
 
 This section describes the **end-to-end lifecycle of a user SQL query** in the Universal SQL platform — from request entry to result delivery.
