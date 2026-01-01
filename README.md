@@ -1,6 +1,7 @@
 # Universal SQL Prototype (Cross-Connector Query Engine)
 
-See [System Architecture](docs/system-architecture.md) for control-plane and deployment design.
+See [System Architecture](docs/system-architecture.md) for high-level system components and deployment design.
+See [Query Lifecycle](query-lifecycle.md) for the end-to-end execution flow.
 
 ## Overview
 
