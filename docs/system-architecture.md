@@ -1,5 +1,7 @@
 # System Architecture: Universal SQL Platform
 
+See [Query Lifecycle](query-lifecycle.md) for the end-to-end execution flow.
+
 ## Overview
 
 The Universal SQL platform is designed with a **control-plane–first architecture**, where administrators configure tenants, connectors, policies, and budgets before any user query is executed.
