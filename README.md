@@ -1,5 +1,7 @@
 # Universal SQL Prototype (Cross-Connector Query Engine)
 
+See [System Architecture](docs/system-architecture.md) for control-plane and deployment design.
+
 ## Overview
 
 This project is a **thin-slice prototype** of a Universal SQL query engine that enables querying across multiple SaaS data sources (e.g., GitHub, Jira) using a single SQL interface.
